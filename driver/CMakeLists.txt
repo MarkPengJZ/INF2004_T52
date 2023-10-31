@@ -1,6 +1,8 @@
 add_subdirectory(encoder)
 add_subdirectory(motor)
 add_subdirectory(ultrasonic)
+add_subdirectory(irline_navigation)
+add_subdirectory(irline_barcode)
 
 add_executable(demo controller.c)
 
