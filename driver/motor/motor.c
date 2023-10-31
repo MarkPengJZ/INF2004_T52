@@ -7,18 +7,18 @@
 #include "../encoder/encoder.h"
 
 /*
-====== Motor Control ======
+-- Motor Management ======
 IN1 IN2, EN1 -> Right Motor
 IN3 IN4, EN2 -> Left Motor
-====== ============= ======
+-- Motor Configuration --
 */
 
-#define GPIO_PIN_PWM_EN1 14
-#define GPIO_PIN_PWM_EN2 15
-#define GPIO_PIN_MOTOR_IN1 6
-#define GPIO_PIN_MOTOR_IN2 7
-#define GPIO_PIN_MOTOR_IN3 8
-#define GPIO_PIN_MOTOR_IN4 9
+#define RIGHT_MOTOR_PWM_PIN 14
+#define LEFT_MOTOR_PWM_PIN 15
+#define RIGHT_MOTOR_PIN_1 6
+#define RIGHT_MOTOR_PIN_2 7
+#define LEFT_MOTOR_PIN_1 8
+#define LEFT_MOTOR_PIN_2 9
 
 #define PWM_CYCLE 254
 
@@ -27,42 +27,42 @@ IN3 IN4, EN2 -> Left Motor
 static uint pwm_slice;
 
 // Current motor speed
-static uint8_t motorSpeedLeft = 0;
-static uint8_t motorSpeedRight = 0;
+static uint8_t leftMotorSpeed = 0;
+static uint8_t rightMotorSpeed = 0;
 
 // Current motor direction
-static int motorDirLeft = -1;
-static int motorDirRight = -1;
+static int leftMotorDirection = -1;
+static int rightMotorDirection = -1;
 
 static PID *pidLeft;
 static PID *pidRight;
 
-void MOTOR_init(PID *left, PID *right)
+void initializeMotor(PID *left, PID *right)
 {
     printf("[Motor] Init start \n");
 
     // Initialize GPIO pins
-    gpio_init(GPIO_PIN_MOTOR_IN1);
-    gpio_init(GPIO_PIN_MOTOR_IN2);
-    gpio_init(GPIO_PIN_MOTOR_IN3);
-    gpio_init(GPIO_PIN_MOTOR_IN4);
-    gpio_set_dir(GPIO_PIN_MOTOR_IN1, GPIO_OUT);
-    gpio_set_dir(GPIO_PIN_MOTOR_IN2, GPIO_OUT);
-    gpio_set_dir(GPIO_PIN_MOTOR_IN3, GPIO_OUT);
-    gpio_set_dir(GPIO_PIN_MOTOR_IN4, GPIO_OUT);
+    gpio_init(RIGHT_MOTOR_PIN_1);
+    gpio_init(RIGHT_MOTOR_PIN_2);
+    gpio_init(LEFT_MOTOR_PIN_1);
+    gpio_init(LEFT_MOTOR_PIN_2);
+    gpio_set_dir(RIGHT_MOTOR_PIN_1, GPIO_OUT);
+    gpio_set_dir(RIGHT_MOTOR_PIN_2, GPIO_OUT);
+    gpio_set_dir(LEFT_MOTOR_PIN_1, GPIO_OUT);
+    gpio_set_dir(LEFT_MOTOR_PIN_2, GPIO_OUT);
 
     // Initialize PWM
-    gpio_set_function(GPIO_PIN_PWM_EN1, GPIO_FUNC_PWM);
-    gpio_set_function(GPIO_PIN_PWM_EN2, GPIO_FUNC_PWM);
-    pwm_slice = pwm_gpio_to_slice_num(GPIO_PIN_PWM_EN1);
-    // assert(pwm_slice == pwm_gpio_to_slice_num(GPIO_PIN_PWM_EN2));
+    gpio_set_function(RIGHT_MOTOR_PWM_PIN, GPIO_FUNC_PWM);
+    gpio_set_function(LEFT_MOTOR_PWM_PIN, GPIO_FUNC_PWM);
+    pwm_slice = pwm_gpio_to_slice_num(RIGHT_MOTOR_PWM_PIN);
+    // assert(pwm_slice == pwm_gpio_to_slice_num(LEFT_MOTOR_PWM_PIN));
     pwm_config c = pwm_get_default_config();
     pwm_config_set_clkdiv_int(&c, 5);       // clk_sys defaults at 125 MHz, PWM freq is (clk_sys / div)
     pwm_config_set_wrap(&c, PWM_CYCLE - 1); // Set period of PWM_CYCLE cycles (0 to PWM_CYCLE-1)
 
     // Set default state of motor
-    MOTOR_stop(MOTOR_LEFT | MOTOR_RIGHT);
-    MOTOR_setDirection(MOTOR_DIR_FORWARD, MOTOR_LEFT | MOTOR_RIGHT);
+    MOTOR_stop(LEFT_MOTOR | RIGHT_MOTOR);
+    setMotorDirection(DIRECTION_FORWARD, LEFT_MOTOR | RIGHT_MOTOR);
 
     pwm_init(pwm_slice, &c, true);
 
@@ -72,8 +72,8 @@ void MOTOR_init(PID *left, PID *right)
     printf("[Motor] Init done \n");
 }
 
-//Motor speed setter and getter functions
-void MOTOR_setSpeed(uint dutyCycle, int motor)
+// Motor speed setter and getter functions
+void setMotorSpeed(uint dutyCycle, int motor)
 {
     if (dutyCycle < 0)
         dutyCycle = 0;
@@ -81,28 +81,28 @@ void MOTOR_setSpeed(uint dutyCycle, int motor)
         dutyCycle = 100;
     // Convert to its appropriate PWM level from percentage
     uint16_t level = dutyCycle / 100.f * PWM_CYCLE;
-    if (motor & MOTOR_LEFT)
+    if (motor & LEFT_MOTOR)
     {
         pwm_set_chan_level(pwm_slice, PWM_CHAN_A, level);
-        motorSpeedLeft = dutyCycle;
+        leftMotorSpeed = dutyCycle;
     }
-    if (motor & MOTOR_RIGHT)
+    if (motor & RIGHT_MOTOR)
     {
         pwm_set_chan_level(pwm_slice, PWM_CHAN_B, level);
-        motorSpeedRight = dutyCycle;
+        rightMotorSpeed = dutyCycle;
     }
 }
 
 uint MOTOR_getSpeed(int motor)
 {
     // Return motor duty cycle in percentage
-    if (motor & MOTOR_LEFT)
+    if (motor & LEFT_MOTOR)
     {
-        return motorSpeedLeft;
+        return leftMotorSpeed;
     }
-    else if (motor & MOTOR_RIGHT)
+    else if (motor & RIGHT_MOTOR)
     {
-        return motorSpeedRight;
+        return rightMotorSpeed;
     }
     else
     {
@@ -110,80 +110,80 @@ uint MOTOR_getSpeed(int motor)
     }
 }
 
-//Motor direction setter and getter functions
-void MOTOR_setDirection(int dir, int motor)
+// Motor direction setter and getter functions
+void setMotorDirection(int dir, int motor)
 {
     // Motor 1: IN1 IN2
     // 10 = Forward, 01 = Reverse
     // Motor 2: IN3 IN4
     // 01 = Forward, 10 = Reverse
-    if (dir == MOTOR_DIR_FORWARD)
+    if (dir == DIRECTION_FORWARD)
     {
-        if (motor & MOTOR_LEFT)
+        if (motor & LEFT_MOTOR)
         {
-            gpio_put(GPIO_PIN_MOTOR_IN3, 1);
-            gpio_put(GPIO_PIN_MOTOR_IN4, 0);
-            motorDirLeft = MOTOR_DIR_FORWARD;
+            gpio_put(LEFT_MOTOR_PIN_1, 1);
+            gpio_put(LEFT_MOTOR_PIN_2, 0);
+            leftMotorDirection = DIRECTION_FORWARD;
         }
-        if (motor & MOTOR_RIGHT)
+        if (motor & RIGHT_MOTOR)
         {
-            gpio_put(GPIO_PIN_MOTOR_IN1, 1);
-            gpio_put(GPIO_PIN_MOTOR_IN2, 0);
-            motorDirRight = MOTOR_DIR_FORWARD;
+            gpio_put(RIGHT_MOTOR_PIN_1, 1);
+            gpio_put(RIGHT_MOTOR_PIN_2, 0);
+            rightMotorDirection = DIRECTION_FORWARD;
         }
     }
-    else if (dir == MOTOR_DIR_REVERSE)
+    else if (dir == DIRECTION_REVERSE)
     {
-        if (motor & MOTOR_LEFT)
+        if (motor & LEFT_MOTOR)
         {
-            gpio_put(GPIO_PIN_MOTOR_IN3, 0);
-            gpio_put(GPIO_PIN_MOTOR_IN4, 1);
-            motorDirLeft = MOTOR_DIR_REVERSE;
+            gpio_put(LEFT_MOTOR_PIN_1, 0);
+            gpio_put(LEFT_MOTOR_PIN_2, 1);
+            leftMotorDirection = DIRECTION_REVERSE;
         }
-        if (motor & MOTOR_RIGHT)
+        if (motor & RIGHT_MOTOR)
         {
-            gpio_put(GPIO_PIN_MOTOR_IN1, 0);
-            gpio_put(GPIO_PIN_MOTOR_IN2, 1);
-            motorDirRight = MOTOR_DIR_REVERSE;
+            gpio_put(RIGHT_MOTOR_PIN_1, 0);
+            gpio_put(RIGHT_MOTOR_PIN_2, 1);
+            rightMotorDirection = DIRECTION_REVERSE;
         }
     }
 }
 
 int MOTOR_getDirection(int motor)
 {
-    if (motor == MOTOR_LEFT)
+    if (motor == LEFT_MOTOR)
     {
-        return motorDirLeft;
+        return leftMotorDirection;
     }
-    else if (motor == MOTOR_RIGHT)
+    else if (motor == RIGHT_MOTOR)
     {
-        return motorDirRight;
+        return rightMotorDirection;
     }
     return -1;
 }
 
 void MOTOR_setLeftTurnMode(void)
 {
-    MOTOR_setDirection(MOTOR_DIR_REVERSE, MOTOR_LEFT);
-    MOTOR_setDirection(MOTOR_DIR_FORWARD, MOTOR_RIGHT);
+    setMotorDirection(DIRECTION_REVERSE, LEFT_MOTOR);
+    setMotorDirection(DIRECTION_FORWARD, RIGHT_MOTOR);
 }
 
 void MOTOR_setRightTurnMode(void)
 {
-    MOTOR_setDirection(MOTOR_DIR_FORWARD, MOTOR_LEFT);
-    MOTOR_setDirection(MOTOR_DIR_REVERSE, MOTOR_RIGHT);
+    setMotorDirection(DIRECTION_FORWARD, LEFT_MOTOR);
+    setMotorDirection(DIRECTION_REVERSE, RIGHT_MOTOR);
 }
 
-//Motor Stop Functions
+// Motor Stop Functions
 void MOTOR_stop(int motor)
 {
-    MOTOR_setSpeed(0, motor);
+    setMotorSpeed(0, motor);
 }
 
 bool pidStopCallback(struct repeating_timer *timer)
 {
-    PID_setTargetSpeed(pidLeft, SPEED_NONE);
-    PID_setTargetSpeed(pidRight, SPEED_NONE);
+    PID_setTargetSpeed(pidLeft, NO_SPEED);
+    PID_setTargetSpeed(pidRight, NO_SPEED);
     return false;
 }
 
@@ -209,20 +209,20 @@ void MOTOR_spotTurn(int turnDirection, int angle)
         }
     }
 
-    //Motor will turn based on the number of interrupt count
+    // Motor will turn based on the number of interrupt count
     int interrupts = 4 * angle / MIN_TURN_ANGLE;
     int speed = 80;
 
-    //Motor will turn right/left based on direction set
-    if (turnDirection == MOTOR_TURN_CLOCKWISE)
+    // Motor will turn right/left based on direction set
+    if (turnDirection == TURN_CLOCKWISE)
         MOTOR_setRightTurnMode();
-    else if (turnDirection == MOTOR_TURN_ANTICLOCKWISE)
+    else if (turnDirection == TURN_COUNTERCLOCKWISE)
         MOTOR_setLeftTurnMode();
 
-    //Turn until interrupt count is reached
-    MOTOR_setSpeed(speed, MOTOR_LEFT | MOTOR_RIGHT);
+    // Turn until interrupt count is reached
+    setMotorSpeed(speed, LEFT_MOTOR | RIGHT_MOTOR);
     ENCODER_waitForISRInterrupts(interrupts);
-    MOTOR_stop(MOTOR_LEFT | MOTOR_RIGHT);
+    MOTOR_stop(LEFT_MOTOR | RIGHT_MOTOR);
 }
 
 void MOTOR_spotTurnPID(PID *pidLeft, PID *pidRight, int turnDirection, int angle)
@@ -246,50 +246,50 @@ void MOTOR_spotTurnPID(PID *pidLeft, PID *pidRight, int turnDirection, int angle
         }
     }
 
-    //Motor will turn based on the number of interrupt count
+    // Motor will turn based on the number of interrupt count
     int interrupts = 4 * angle / MIN_TURN_ANGLE;
 
-    //Motor will turn right/left based on direction set
-    if (turnDirection == MOTOR_TURN_CLOCKWISE)
+    // Motor will turn right/left based on direction set
+    if (turnDirection == TURN_CLOCKWISE)
         MOTOR_setRightTurnMode();
-    else if (turnDirection == MOTOR_TURN_ANTICLOCKWISE)
+    else if (turnDirection == TURN_COUNTERCLOCKWISE)
         MOTOR_setLeftTurnMode();
 
-    //Turn until interrupt count is reached
-    PID_setTargetSpeed(pidLeft, SPEED_MEDIUM);
-    PID_setTargetSpeed(pidRight, SPEED_MEDIUM);
+    // Turn until interrupt count is reached
+    PID_setTargetSpeed(pidLeft, MEDIUM_SPEED);
+    PID_setTargetSpeed(pidRight, MEDIUM_SPEED);
     ENCODER_alertAfterISRInterrupts(interrupts, pidStopCallback); // Setup timer to alert when turn is done
 }
 
 // Move Specific Distance Functions
 void MOTOR_moveFoward(int cm)
 {
-    //Convert distance(in cm) to interrupt count
+    // Convert distance(in cm) to interrupt count
     int interrupts = ENCODER_cmToSteps(cm);
     int speed = 80;
 
     // Set Motor Direction Foward
-    MOTOR_setDirection(MOTOR_DIR_FORWARD, MOTOR_LEFT | MOTOR_RIGHT);
+    setMotorDirection(DIRECTION_FORWARD, LEFT_MOTOR | RIGHT_MOTOR);
 
     // Go forward until interrupt count is reached
-    MOTOR_setSpeed(speed, MOTOR_LEFT | MOTOR_RIGHT);
-    ENCODER_waitForISRInterrupts(interrupts); 
-    MOTOR_stop(MOTOR_LEFT | MOTOR_RIGHT); 
+    setMotorSpeed(speed, LEFT_MOTOR | RIGHT_MOTOR);
+    ENCODER_waitForISRInterrupts(interrupts);
+    MOTOR_stop(LEFT_MOTOR | RIGHT_MOTOR);
 }
 
 void MOTOR_moveBackward(int cm)
 {
-    //Convert distance(in cm) to interrupt count
+    // Convert distance(in cm) to interrupt count
     int interrupts = ENCODER_cmToSteps(cm);
     int speed = 80;
 
     // Set Motor Direction Backwards
-    MOTOR_setDirection(MOTOR_DIR_REVERSE, MOTOR_LEFT | MOTOR_RIGHT);
+    setMotorDirection(DIRECTION_REVERSE, LEFT_MOTOR | RIGHT_MOTOR);
 
     // Go Backwards until interrupt count is reached
-    MOTOR_setSpeed(speed, MOTOR_LEFT | MOTOR_RIGHT);
-    ENCODER_waitForISRInterrupts(interrupts); 
-    MOTOR_stop(MOTOR_LEFT | MOTOR_RIGHT);  
+    setMotorSpeed(speed, LEFT_MOTOR | RIGHT_MOTOR);
+    ENCODER_waitForISRInterrupts(interrupts);
+    MOTOR_stop(LEFT_MOTOR | RIGHT_MOTOR);
 }
 
 void MOTOR_moveFowardPID(PID *pidLeft, PID *pidRight, int cm)
@@ -297,10 +297,10 @@ void MOTOR_moveFowardPID(PID *pidLeft, PID *pidRight, int cm)
     int interrupts = ENCODER_cmToSteps(cm);
 
     // Set Motor Direction Foward
-    MOTOR_setDirection(MOTOR_DIR_FORWARD, MOTOR_LEFT | MOTOR_RIGHT);
+    setMotorDirection(DIRECTION_FORWARD, LEFT_MOTOR | RIGHT_MOTOR);
 
     // Go forward until interrupt count is reached
-    PID_setTargetSpeed(pidLeft, SPEED_MEDIUM);
-    PID_setTargetSpeed(pidRight, SPEED_MEDIUM);
+    PID_setTargetSpeed(pidLeft, MEDIUM_SPEED);
+    PID_setTargetSpeed(pidRight, MEDIUM_SPEED);
     ENCODER_alertAfterISRInterrupts(interrupts, pidStopCallback); // Setup timer to alert when movement is done
 }

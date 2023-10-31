@@ -1,14 +1,14 @@
 #ifndef PID_H_
 #define PID_H_
 
-#define SPEED_NONE 0
-#define SPEED_LOW 1
-#define SPEED_MEDIUM 2
-#define SPEED_HIGH 3
+#define NO_SPEED 0
+#define LOW_SPEED 1
+#define MEDIUM_SPEED 2
+#define HIGH_SPEED 3
 
 #define uint unsigned int
 
-// PID controller memory
+// Memory structure for PID controller
 typedef struct _PID {
     float kP, kI, kD;
     float setPoint;
@@ -18,13 +18,13 @@ typedef struct _PID {
     float lastError;
 } PID;
 
-// Create a new PID controller
-PID* PID_create(float kP, float kI, float kD, float setPoint, float min, float max);
-// Set the new setpoint for a PID controller.
-void PID_setTarget(PID *pid, float setPoint);
-// Shorthand for PID_setTarget using the SPEED_NONE, SPEED_MEDIUM, etc for predefined speeds.
-void PID_setTargetSpeed(PID *pid, int speed);
-// PID control loop
-uint PID_run(PID* pid, float input, float deltaTime);
+// Instantiate a new PID controller
+PID* createPIDController(float kP, float kI, float kD, float setPoint, float min, float max);
+// Update the setpoint for the PID controller for a PID controller.
+void setPIDTargetValue(PID *pid, float setPoint);
+// Shorthand for setPIDTargetValue using the NO_SPEED, MEDIUM_SPEED, etc for predefined speeds.
+void setPIDTargetValueSpeed(PID *pid, int speed);
+// Execute the PID control algorithm
+uint executePIDControlLoop(PID* pid, float input, float deltaTime);
 
 #endif
