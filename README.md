@@ -46,8 +46,7 @@ A `README.md` can be found in each sub-module folder with explaination for each 
 | Infrared | 26 - Digital IN |
 
 ## System Diagrams
-![image](https://github.com/MarkPengJZ/INF2004-Embedded-Systems-Programming/assets/54793197/4a7909d2-3089-42cb-99da-fda741e8f08c)
-
+![System_Diagram](https://github.com/MarkPengJZ/INF2004-Embedded-Systems-Programming/assets/54793197/4858f5d6-7340-4589-ac80-599052760d2f)
 
 ## Members
 
