@@ -31,7 +31,8 @@ A `README.md` can be found in each sub-module folder with explaination for each 
 - Raspberry Pico
 - 1x L298N Motor Driver
 - 2x DC Motor
-- 3x IR Encoder
+- 2x Encoder
+- 3x IR Sensor
 - 1x Magnetometer
 - 1x HC-SR04 Ultrasonic Sensor
 
