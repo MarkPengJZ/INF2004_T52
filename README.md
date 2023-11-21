@@ -44,6 +44,9 @@ A `README.md` can be found in each sub-module folder with explaination for each 
 | Motor PWM | 14 - Left Motor <br/> 15 - Right Motor |
 | Infrared | 26 - Digital IN |
 
+## System Diagrams|
+---Placeholder images---
+
 ## Members
 
 <table>
