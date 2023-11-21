@@ -13,6 +13,7 @@
 INF2004 Team 52 Robot Car Project
 ###Directory Structure
 A CMake Project containing our source code. Divided into sub-folders each containing one sub-module, depicted below.
+```bash
 pico
 ├── magnetometer
 ├── wifi
@@ -22,6 +23,9 @@ pico
 ├── navigation (mapping + shortest route)
 ├── ultrasonic
 └── main.c (program entry point)
+```
+
+A `README.md` can be found in each sub-module folder with explaination for each module. 
 
 ## Hardware
 - Raspberry Pico
