@@ -1,4 +1,10 @@
 # INF2004-Embedded-Systems-Programming
 
-Group 52
-Test
+## Table of contents
+* [General Info](#general-info)
+* [Hardware](#hardware)
+* [Pin Layout](#pin-layout)
+* [Software](#software)
+* [Members](#members)
+
+* 
