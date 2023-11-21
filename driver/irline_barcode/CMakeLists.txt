@@ -1,15 +1,13 @@
-add_executable(irline_barcode
-        irline_barcode.c
+add_executable(infraredMain
+            infraredMain.c
         )
 
-target_link_libraries(irline_barcode pico_stdlib hardware_adc)
+# pull in common dependencies
+target_link_libraries(infraredMain pico_stdlib)
 
-# enable usb output
-pico_enable_stdio_usb(irline_barcode 1)
+# enable PUTTY console debugging :D
+pico_enable_stdio_usb(infraredMain 1)
+pico_enable_stdio_uart(infraredMain 0)
 
-# create map/bin/hex file etc.
-pico_add_extra_outputs(irline_barcode)
-
-# add url via pico_set_program_url
-example_auto_set_url(irline_barcode)
-
+# create map/bin/hex/uf2 file etc.
+pico_add_extra_outputs(infraredMain)
