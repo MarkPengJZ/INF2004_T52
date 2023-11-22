@@ -14,7 +14,7 @@ INF2004 Team 52 Robot Car Project
 ###Directory Structure
 A CMake Project containing our source code. Divided into sub-folders each containing one sub-module, depicted below.
 ```bash
-pico
+driver 
 ├── magnetometer
 ├── wifi
 ├── encoder
