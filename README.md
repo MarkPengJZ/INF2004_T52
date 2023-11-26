@@ -47,9 +47,9 @@ A `README.md` can be found in each sub-module folder with explaination for each 
 | Ultrasonic| |
 
 ## System Diagrams
-### System Diagram
+### Block Diagram
 ![System_Diagram](https://github.com/MarkPengJZ/INF2004-Embedded-Systems-Programming/assets/54793197/4858f5d6-7340-4589-ac80-599052760d2f)
-### Flowchart
+### Flow Diagram
 ![Flowchart](https://github.com/MarkPengJZ/INF2004_T52/assets/54793197/6cec5ece-30dd-4906-b776-99564465e420)
 
 
