@@ -28,7 +28,7 @@ driver
 A `README.md` can be found in each sub-module folder with explaination for each module. 
 
 ## Hardware
-- Raspberry Pico
+- Raspberry Pico W
 - 1x L298N Motor Driver
 - 2x DC Motor
 - 2x Encoder
@@ -40,13 +40,18 @@ A `README.md` can be found in each sub-module folder with explaination for each 
 | Hardware | GPIO # |
 |---|---|
 | Encoder | 2 - Left Motor <br/> 3 - Right Motor |
-| Accelerometer | 4 - I2C (SDA) <br/> 5 - I2C (SDL) |
+| Magnetometer | |
 | Motor Control | 6 - IN1 <br/> 7 - IN2 <br/> 8 - IN3 <br/> 9 - IN4|
 | Motor PWM | 14 - Left Motor <br/> 15 - Right Motor |
 | Infrared | 26 - Digital IN |
+| Ultrasonic| |
 
 ## System Diagrams
+### System Diagram
 ![System_Diagram](https://github.com/MarkPengJZ/INF2004-Embedded-Systems-Programming/assets/54793197/4858f5d6-7340-4589-ac80-599052760d2f)
+### Flowchart
+![Flowchart](https://github.com/MarkPengJZ/INF2004_T52/assets/54793197/6cec5ece-30dd-4906-b776-99564465e420)
+
 
 ## Members
 
@@ -58,14 +63,20 @@ A `README.md` can be found in each sub-module folder with explaination for each 
   <tr>
     <td>Motor</td>
     <td>
-    Hafizh
+    Mark
     </td>
   </tr>
   <tr>
     <td>Ultrasonic &<br/>Accelerometer</td>
+    <td>
+      Hafizh
+    </td>
   </tr>
   <tr>
     <td>Infrared &<br/>Encoder</td>
+    <td>
+      Koko
+    </td>
   </tr>
   <tr>
     <td>Wifi</td>
