@@ -88,7 +88,7 @@ const int no7[9] = {0, 0, 0, 1, 0, 0, 1, 0, 1};
 const int no8[9] = {1, 0, 0, 1, 0, 0, 1, 0, 0};
 const int no9[9] = {0, 0, 1, 1, 0, 0, 1, 0, 0};
 
-int compareArray(int a[], const int b[])
+int compareArrays(int a[], const int b[])
 {
     int i;
     for (i = 0; i < 9; i++)
@@ -99,15 +99,15 @@ int compareArray(int a[], const int b[])
     return 0; // If array equal, return 0
 }
 
-void INFRARED_init(void)
+void initInfrared(void)
 {
-    printf("[Encoder] Init start \n");
+    printf("[Encoder] Initialization started \n");
 
     // Initialization
     gpio_init(GPIO_PIN_INFRARED_IN1);
-    gpio_set_dir(GPIO_PIN_INFRARED_IN1, GPIO_IN); // S1 in
+    gpio_set_dir(GPIO_PIN_INFRARED_IN1, GPIO_IN);
 
-    printf("[Encoder] Init done \n");
+    printf("[Encoder] Initialization done \n");
 }
 
 int readyToStartBarcode()
