@@ -7,6 +7,7 @@
 * [Software](#software)
 * [System Diagrams](#system-diagrams)
 * [Members](#members)
+* [Project Reflection](#project-reflection)
 
 ## General Info
 ### Introduction
@@ -84,7 +85,6 @@ A `README.md` can be found in each sub-module folder with explaination for each 
     Elias
     </td>
   </tr>
-  <tr>
-    <td>Mapping &<br/>Navigation</td>
-  </tr>
 </table>
+
+## Project Reflections
