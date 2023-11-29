@@ -100,14 +100,16 @@ driver
 
 ## Project Reflections
 
-With the conclusion of our project, we had a car that was only partially integrated, without any mapping or navigation capabillites. This was disheartening but would however push us to improve and learn more about embedded systems.
+Upon the project's conclusion, we found ourselves with a partially integrated car, lacking essential mapping and navigation capabilities. While this outcome was disheartening, it served as a catalyst for our team to enhance our understanding of embedded systems and undertake further improvements.
 
-We faced many issues during the implementation with the car, we suspect that its mainly due to faulty hardware parts but are not able to confirm it. If we are able to redo this project, we would have started out with the implementation of RTOS first as this would greatly facilitate more complicated functionalities that we would have like to implement. In theory, we had a plan in place, with decent understanding and planning of how the mapping/navigation would go, however due to us being unable to calibrate our motors, we were stuck and left with a shortage of time, as we had to troubleshoot on many occasions.
+Throughout the implementation phase, our team encountered various challenges. Although suspected, confirmation of potential hardware faults remained elusive. In hindsight, a key revision for a hypothetical project redo would involve prioritizing the initial implementation of a Real-Time Operating System (RTOS). This strategic approach would significantly enhance our ability to integrate more complex functionalities, particularly those related to mapping and navigation.
 
-Even though we implemented PID calibration for our motors, it was not sufficient to get the motors running at the same speed, we noticed that one motor may reach optimal speed before the other motor, which lead to visually detectable wiggle in the car's steering as it begins driving forward.
+Despite having a well-conceived theoretical plan, challenges arose during motor calibration, leading to a shortage of time due to frequent troubleshooting. Despite the implementation of PID calibration for the motors, disparities in speed became evident, resulting in visible steering oscillations during forward motion. These variations were attributed to slight differences in friction between the two motors, even under the control of a closed feedback loop.
 
-- Small differences in friction between the 2 motors cause them to come up to speed differently even under the control of a closed feedback loop
-- To reduce this, we will consider implement a further 'C' term to our controller, aiming to minimize the difference between the encoder counts of the 2 motors
-- 'C' 4th term in controller (Count difference in encoder count a/b)
+To address the motor synchronization issue, our proposed solution involves the incorporation of an additional 'C' term in our controller. This fourth term aims to minimize the disparity in encoder counts between the two motors, providing a more refined approach to mitigating speed differentials.
 
-We also encountered issues with the magnetometer whereby the values we receieve would always fluctuate even though the sensor was stationary leading to inaccurate readings and hence inaccurate directon to turn. This resulted in the final decision of us forgoing magnetometer due to the unreliable sensor input.
+Another challenge emerged with the magnetometer, where fluctuating values were observed even when the sensor was stationary, leading to inaccurate readings and subsequently unreliable directional information. Consequently, the decision was made to forgo the magnetometer due to its unreliable sensor input.
+
+The barcode presented another challenge, particularly in achieving straight driving for proper IR sensor reading. Initially attributing the issue to sensor reading code, we later identified that the car's speed was the determining factor. Adjusting the speed to match the threshold for line detection enabled successful barcode reading.
+
+In summary, our project experience underscores the importance of thorough hardware testing and calibration from the project's inception. The incorporation of an RTOS and the refinement of control algorithms will be pivotal considerations for future projects of similar complexity, ensuring a robust foundation for the implementation of intricate functionalities.
