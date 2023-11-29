@@ -1,14 +1,15 @@
-
+// Define a structure to represent accelerometer data
 typedef struct
 {
-    int16_t raw_x_axis;
-    int16_t raw_y_axis;
-    int16_t raw_z_axis;
-} accel_t;
+    short rawXAxis; // 16-bit signed integer for raw x-axis acceleration
+    short rawYAxis; // 16-bit signed integer for raw y-axis acceleration
+    short rawZAxis; // 16-bit signed integer for raw z-axis acceleration
+} AccelerometerData;
 
-void magnetometer_task(__unused void *params);
+// Declare functions for magnetometer and accelerometer operations
+void magnetometerTask(void); // Unused parameter 'params'
 void initializeMagnetometer(void);
 void initializeAccelerometer(void);
-accel_t readAccelerometer(void);
+AccelerometerData readAccelerometer(void); // Returns accelerometer data
 void initializeCompass(void);
-float readCompassDegrees(accel_t acceleration);
+float readCompassDegrees(AccelerometerData acceleration); // Converts accelerometer data to compass degrees
