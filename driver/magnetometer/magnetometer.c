@@ -1,142 +1,216 @@
 #include <stdio.h>
+#include <math.h>
 #include "pico/stdlib.h"
 #include "hardware/i2c.h"
-#include <math.h>
+#include "magnetometer.h"
 
-#define GY511_I2C_PORT i2c0
-#define GY511_BAUD_RATE 100000
-#define GY511_SDA_PIN 0
-#define GY511_SCL_PIN 1
+// Constants for I2C setup and sensor addresses
+#define I2C_BUS i2c0
+#define I2C_DATA_RATE 400000   // Data rate in Hz
+#define MAGNETOMETER_SCL_PIN 1 // SCL pin number
+#define MAGNETOMETER_SDA_PIN 0 // SDA pin number
+#define PI 3.14159265358979323846
+#define MOVING_AVG_WINDOW_SIZE 10 // Size of the moving average window
 
-#define GY511_ACCEL_ADDR 0x19
-#define GY511_MAG_ADDR 0x1E
+float headingBuffer[MOVING_AVG_WINDOW_SIZE];
+int bufferIndex = 0;
 
-// GY511 Accelerometer Register Addresses
-#define CTRL_REG1_A 0x20
-#define CTRL_REG1_A_CONFIG 0x37
-#define CTRL_REG4_A 0x23
-#define CTRL_REG4_A_CONFIG 0x00 // Full-scale selection: 2g, High resolution disabled
-#define ACC_XYZ_REG 0xA8 // 0x28 (Acc Output register) + 0x80 (auto increment)
+// Sensor I2C addresses
+#define ACCEL_SENSOR_ADDR 0x19  // Accelerometer address
+#define MAGNET_SENSOR_ADDR 0x1E // Magnetometer address
 
-// GY511 Magnetometer Register Addresses
-#define CRA_REG_M 0x00
-#define CRA_REG_M_CONFIG 0x10 // 15 Hz, normal mode
-#define CRB_REG_M 0x01
-#define CRB_REG_M_CONFIG 0xE0 // gause +- 8.1, gain 230, gain Z 205
-#define MR_REG_M 0x02
-#define MR_REG_M_CONFIG 0x00 // Continuous conversion mode
-#define MAG_XYZ_REG 0x03 // 0x03 (Mag Output register) + 0x0A (auto increment)
-
-uint8_t get_Heading_in_Degrees(int16_t x, int16_t y)
+// Function to add a value to the buffer and compute the moving average
+float computeMovingAverage(float newHeading)
 {
-    int8_t angle = atan2(y, x) * 180 / M_PI;
-    return angle;
-}
+    headingBuffer[bufferIndex] = newHeading;
+    bufferIndex = (bufferIndex + 1) % MOVING_AVG_WINDOW_SIZE;
 
-void writeI2CRegister(uint8_t addr, uint8_t writeAddr, uint8_t writeData)
-{
-    uint8_t data[2] = {writeAddr, writeData};
-    i2c_write_blocking(GY511_I2C_PORT, addr, data, 2, true);
-}
-
-
-/* TEST features the printed version of X Y Z values */
-void readI2C_XYZ_TEST(uint8_t addr, uint8_t reg)
-{
-    int16_t x, y, z;
-    uint8_t data[6];
-
-    // Read the XYZ values
-    i2c_write_blocking(GY511_I2C_PORT, addr, &reg, 1, true);
-    i2c_read_blocking(GY511_I2C_PORT, addr, data, 6, false);
-
-    // Combine the low and high bytes to get the values
-    x = (data[1] << 8) | data[0];
-    y = (data[3] << 8) | data[2];
-    z = (data[5] << 8) | data[4];
-
-    if (addr == GY511_MAG_ADDR)
+    float sum = 0;
+    for (int i = 0; i < MOVING_AVG_WINDOW_SIZE; i++)
     {
-        // The magnetometer is in 2's complement form and needs to be converted to magnetic field values.
-        int8_t angle = atan2(y, x) * 180 / M_PI;
-        
-        printf("Magnetic Field (X, Y, Z): %d, %d, %d\t Heading (in degrees): %d\t", x, y, z, angle);
+        sum += headingBuffer[i];
     }
-    else if (addr == GY511_ACCEL_ADDR)
+    return sum / MOVING_AVG_WINDOW_SIZE;
+}
+
+void magnetometerTask(__unused void *params)
+{
+    // Initialize the magnetometer once at the start
+    initializeMagnetometer();
+
+    // Main loop to continuously read the accelerometer and magnetometer data
+    while (true)
     {
-        // The accelerometer is in 2's complement form and needs to be converted to Gs.
-        printf("Acceleration (X, Y, Z):  %d, %d, %d\t", x, y, z);
+        accel_t acceleration = readAccelerometer();
+        float compassHeading = readCompassDegrees(acceleration);
+
+        printf("Accel X: %d Accel Y: %d Accel Z: %d Compass: %.2f\n", acceleration.raw_x_axis, acceleration.raw_y_axis, acceleration.raw_z_axis, compassHeading);
     }
 }
 
-void readI2C_XYZ(uint16_t XYZ[3] , uint8_t addr, uint8_t reg)
+void initializeMagnetometer(void)
 {
-    uint8_t buffer[6];
+    // Initialize I2C with the specified data rate
+    i2c_init(I2C_BUS, I2C_DATA_RATE);
 
-    // Read the XYZ values
-    i2c_write_blocking(GY511_I2C_PORT, addr, &reg, 1, true);
-    i2c_read_blocking(GY511_I2C_PORT, addr, buffer, 6, false);
+    // Configure the SCL and SDA pins for I2C communication
+    gpio_set_function(MAGNETOMETER_SCL_PIN, GPIO_FUNC_I2C);
+    gpio_set_function(MAGNETOMETER_SDA_PIN, GPIO_FUNC_I2C);
 
-    // Combine the low and high bytes to get the values
-    XYZ[0] = (buffer[1] << 8) | buffer[0];
-    XYZ[1] = (buffer[3] << 8) | buffer[2];
-    XYZ[2] = (buffer[5] << 8) | buffer[4];
+    // Enable internal pull-ups for the I2C pins
+    gpio_pull_up(MAGNETOMETER_SCL_PIN);
+    gpio_pull_up(MAGNETOMETER_SDA_PIN);
 
-    if (addr == GY511_MAG_ADDR)
+    // Initialize the accelerometer and compass modules
+    initializeAccelerometer();
+    initializeCompass();
+}
+
+void initializeAccelerometer(void)
+{
+    // Control register addresses and values for accelerometer setup
+    const uint8_t CTRL_REG1_A = 0x20;
+    const uint8_t ENABLE_ACCEL = 0x57; // 100 Hz data rate, all axes enabled, normal mode
+    const uint8_t CTRL_REG4_A = 0x23;
+    const uint8_t FULL_SCALE = 0x00; // +/- 2g scale
+
+    // Enable the accelerometer by writing to control register 1
+    uint8_t config[] = {CTRL_REG1_A, ENABLE_ACCEL};
+    i2c_write_blocking(I2C_BUS, ACCEL_SENSOR_ADDR, config, sizeof(config), true);
+
+    // Set the full scale by writing to control register 4
+    config[0] = CTRL_REG4_A;
+    config[1] = FULL_SCALE;
+    i2c_write_blocking(I2C_BUS, ACCEL_SENSOR_ADDR, config, sizeof(config), true);
+}
+
+accel_t readAccelerometer(void)
+{
+    // Addresses for accelerometer data registers with auto-increment bit set
+    const uint8_t OUT_X_L_A = 0x28 | 0x80;
+    uint8_t accelData[6] = {0}; // Buffer to hold raw accelerometer data
+
+    // Request accelerometer data
+    i2c_write_blocking(I2C_BUS, ACCEL_SENSOR_ADDR, &OUT_X_L_A, 1, true);
+    i2c_read_blocking(I2C_BUS, ACCEL_SENSOR_ADDR, accelData, sizeof(accelData), true);
+
+    // Combine high and low bytes for each axis
+    int16_t rawXAxis = (int16_t)((accelData[1] << 8) | accelData[0]) >> 4;
+    int16_t rawYAxis = (int16_t)((accelData[3] << 8) | accelData[2]) >> 4;
+    int16_t rawZAxis = (int16_t)((accelData[5] << 8) | accelData[4]) >> 4;
+
+    // Return raw acceleration data in a struct
+    accel_t data = {
+        .raw_x_axis = rawXAxis,
+        .raw_y_axis = rawYAxis,
+        .raw_z_axis = rawZAxis};
+
+    return data;
+}
+
+void initializeCompass(void)
+{
+    // Address and values for magnetometer control registers
+    const uint8_t MR_REG_M = 0x02;
+    const uint8_t CONTINUOUS_CONVERSION = 0x00;
+    const uint8_t CRA_REG_M = 0x00;
+    const uint8_t DATA_RATE = 0x10; // 15Hz data rate
+    const uint8_t CRB_REG_M = 0x01;
+    const uint8_t GAIN = 0x20; // +/- 1.3g scale
+
+    // Enable continuous conversion mode on the magnetometer
+    uint8_t config[] = {MR_REG_M, CONTINUOUS_CONVERSION};
+    i2c_write_blocking(I2C_BUS, MAGNET_SENSOR_ADDR, config, sizeof(config), true);
+
+    // Set the data rate on the magnetometer
+    config[0] = CRA_REG_M;
+    config[1] = DATA_RATE;
+    i2c_write_blocking(I2C_BUS, MAGNET_SENSOR_ADDR, config, sizeof(config), true);
+
+    // Set the gain on the magnetometer
+    config[0] = CRB_REG_M;
+    config[1] = GAIN;
+    i2c_write_blocking(I2C_BUS, MAGNET_SENSOR_ADDR, config, sizeof(config), true);
+}
+
+float readCompassDegrees(accel_t acceleration)
+{
+    uint8_t reg[1] = {0};
+    uint8_t data[1] = {0};
+
+    // Read 6 bytes of data (msb first)
+    // Read xMag msb data from register(0x03)
+    reg[0] = 0x03;
+    i2c_write_blocking(I2C_BUS, MAGNET_SENSOR_ADDR, reg, sizeof(reg), true);
+    i2c_read_blocking(I2C_BUS, MAGNET_SENSOR_ADDR, data, sizeof(data), true);
+    uint8_t data1_0 = data[0];
+
+    // Read xMag lsb data from register(0x04)
+    reg[0] = 0x04;
+    i2c_write_blocking(I2C_BUS, MAGNET_SENSOR_ADDR, reg, sizeof(reg), true);
+    i2c_read_blocking(I2C_BUS, MAGNET_SENSOR_ADDR, data, sizeof(data), true);
+    uint8_t data1_1 = data[0];
+
+    // Read yMag msb data from register(0x05)
+    reg[0] = 0x07;
+    i2c_write_blocking(I2C_BUS, MAGNET_SENSOR_ADDR, reg, sizeof(reg), true);
+    i2c_read_blocking(I2C_BUS, MAGNET_SENSOR_ADDR, data, sizeof(data), true);
+    uint8_t data1_2 = data[0];
+
+    // Read yMag lsb data from register(0x06)
+    reg[0] = 0x08;
+    i2c_write_blocking(I2C_BUS, MAGNET_SENSOR_ADDR, reg, sizeof(reg), true);
+    i2c_read_blocking(I2C_BUS, MAGNET_SENSOR_ADDR, data, sizeof(data), true);
+    uint8_t data1_3 = data[0];
+
+    // Read zMag msb data from register(0x07)
+    reg[0] = 0x05;
+    i2c_write_blocking(I2C_BUS, MAGNET_SENSOR_ADDR, reg, sizeof(reg), true);
+    i2c_read_blocking(I2C_BUS, MAGNET_SENSOR_ADDR, data, sizeof(data), true);
+    uint8_t data1_4 = data[0];
+
+    // Read zMag lsb data from register(0x08)
+    reg[0] = 0x06;
+    i2c_write_blocking(I2C_BUS, MAGNET_SENSOR_ADDR, reg, sizeof(reg), true);
+    i2c_read_blocking(I2C_BUS, MAGNET_SENSOR_ADDR, data, sizeof(data), true);
+    uint8_t data1_5 = data[0];
+
+    // Convert the data
+    int16_t xMag = (data1_0 << 8) | data1_1;
+    int16_t yMag = (data1_2 << 8) | data1_3;
+    int16_t zMag = (data1_4 << 8) | data1_5;
+
+    // Convert the accelerometer values to g's
+    float ax = acceleration.raw_x_axis / 16384.0; // Assuming +/-2g range, adjust if different
+    float ay = acceleration.raw_y_axis / 16384.0;
+    float az = acceleration.raw_z_axis / 16384.0;
+
+    // Compute the tilt compensation
+    float pitch = asin(-ax);
+    float roll = asin(ay / cos(pitch));
+
+    // Tilt-compensated magnetic sensor readings
+    float xMagTiltComp = xMag * cos(pitch) + zMag * sin(pitch);
+    float yMagTiltComp = xMag * sin(roll) * sin(pitch) + yMag * cos(roll) - zMag * sin(roll) * cos(pitch);
+
+    // Calculate the heading
+    float heading = (atan2(yMagTiltComp, xMagTiltComp) * 180.0) / PI;
+    if (heading < 0)
     {
-        // The magnetometer is in 2's complement form and needs to be converted to magnetic field values.
-        
-
+        heading += 360;
     }
-    else if (addr == GY511_ACCEL_ADDR)
-    {
-        // The accelerometer is in 2's complement form and needs to be converted to Gs.
-  
-    }
+
+    // Apply a moving average filter
+    return computeMovingAverage(heading);
 }
 
-void accelerometer_init()
+int main(void)
 {
-    // Initialize the accelerometer
-    writeI2CRegister(GY511_ACCEL_ADDR, CTRL_REG1_A, CTRL_REG1_A_CONFIG);
-    writeI2CRegister(GY511_ACCEL_ADDR, CTRL_REG4_A, CTRL_REG4_A_CONFIG);
-    
-}
-
-void magnetometer_init()
-{   
-    // Initialize the magnetometer
-    writeI2CRegister(GY511_MAG_ADDR, CRA_REG_M, CRA_REG_M_CONFIG);
-    writeI2CRegister(GY511_MAG_ADDR, CRB_REG_M, CRB_REG_M_CONFIG);
-    writeI2CRegister(GY511_MAG_ADDR, MR_REG_M, MR_REG_M_CONFIG);
-}
-
-void GY511_init()     
-{   
-    sleep_ms(1000); // Wait for a second to let the sensor initialize
-    i2c_init(GY511_I2C_PORT, GY511_BAUD_RATE); // Initialize I2C at 9600 kHz
-
-    gpio_set_function(GY511_SDA_PIN, GPIO_FUNC_I2C); // SDA
-    gpio_set_function(GY511_SCL_PIN, GPIO_FUNC_I2C); // SCL
-    gpio_pull_up(GY511_SDA_PIN);                     // SDA
-    gpio_pull_up(GY511_SCL_PIN);                     // SCL
-
-    accelerometer_init();
-    magnetometer_init();
-}
-
-int main()
-{
+    // Initialize the standard library for Raspberry Pi Pico
     stdio_init_all();
-    GY511_init();
 
-    while (1)
-    {   
-        readI2C_XYZ_TEST(GY511_ACCEL_ADDR, ACC_XYZ_REG ); // Read accelerometer data
-        readI2C_XYZ_TEST(GY511_MAG_ADDR, MAG_XYZ_REG);   // Read magnetometer data
-        printf("\n");
-        sleep_ms(1000); // Delay for 1 second before reading again
-    }
+    // Start the magnetometer task
+    magnetometerTask(NULL);
 
     return 0;
 }
