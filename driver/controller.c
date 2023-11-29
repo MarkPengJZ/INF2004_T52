@@ -279,7 +279,7 @@ int main()
                                 const char *final_char = INFRARED_returnChar();
                                 printf("\n\n YOUR FINAL READING IS ON THE FOLLOWING LINE: \033[1;31m%s\033[0m", final_char);
 
-                                strcpy(final_reading, final_char);
+                                strcpy(final_reading, final_char); // to send final char reading to wifi
 
                                 INFRARED_resetForNewString(); // After getting final value, reset everything to be able to read a new char/string.
                                 break;

@@ -1683,34 +1683,34 @@ void sortingTimings()
         printf("COUNTSTARS: %d\n", countStar);
     }
 
-    int main()
-    {
-        stdio_init_all(); // For printing into PUTTY program
+    // int main()
+    // {
+    //     stdio_init_all(); // For printing into PUTTY program
 
-        // Main loop
-        while (true)
-        {
+    //     // Main loop
+    //     while (true)
+    //     {
 
-            // Scanning of B/W
-            readyToStartBarcode(); // If white detected, used to move to barcode state in integration
-            if (readyToStartBarcodeState == true)
-            {
-                INFRARED_scanning();
-            }
+    //         // Scanning of B/W
+    //         readyToStartBarcode(); // If white detected, used to move to barcode state in integration
+    //         if (readyToStartBarcodeState == true)
+    //         {
+    //             INFRARED_scanning();
+    //         }
 
-            // One char has been read, sort the timings
-            if (INFRARED_oneCharRead())
-            {
-                INFRARED_sortingTimings();
-            }
+    //         // One char has been read, sort the timings
+    //         if (INFRARED_oneCharRead())
+    //         {
+    //             INFRARED_sortingTimings();
+    //         }
 
-            // Returning Char
-            if (INFRARED_readyToReturnChar())
-            {
-                printf("\n\n YOUR FINAL READING IS ON THE FOLLOWING LINE: \n \033[1;31m%s\033[0m",
-                       INFRARED_returnChar());
-                INFRARED_resetForNewString(); // After getting final value, reset everything to be able to read a new char/string.
-            }
-        }
+    //         // Returning Char
+    //         if (INFRARED_readyToReturnChar())
+    //         {
+    //             printf("\n\n YOUR FINAL READING IS ON THE FOLLOWING LINE: \n \033[1;31m%s\033[0m",
+    //                    INFRARED_returnChar());
+    //             INFRARED_resetForNewString(); // After getting final value, reset everything to be able to read a new char/string.
+    //         }
+    //     }
         
-    }
+    // }
