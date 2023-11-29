@@ -15,18 +15,17 @@ INF2004 Team 52 Robot Car Project
 ###Directory Structure
 A CMake Project containing our source code. Divided into sub-folders each containing one sub-module, depicted below.
 ```bash
-driver 
-├── magnetometer
-├── wifi
+driver
 ├── encoder
-├── infrared
-├── motor (PWM + PID controller)
-├── navigation (mapping + shortest route)
+├── irline_barcode
+├── line_detector
+├── magnetometer
+├── motor
 ├── ultrasonic
-└── main.c (program entry point)
+├── wifi
+└── controller.c (program entry point)
+└── CMakeLists.txt (main CMake file)
 ```
-
-A `README.md` can be found in each sub-module folder with explaination for each module. 
 
 ## Hardware
 - Raspberry Pico W
@@ -41,11 +40,10 @@ A `README.md` can be found in each sub-module folder with explaination for each 
 | Hardware | GPIO # |
 |---|---|
 | Encoder | 2 - Left Motor <br/> 3 - Right Motor |
-| Magnetometer | |
 | Motor Control | 6 - IN1 <br/> 7 - IN2 <br/> 8 - IN3 <br/> 9 - IN4|
 | Motor PWM | 14 - Left Motor <br/> 15 - Right Motor |
-| Infrared | 26 - Digital IN |
-| Ultrasonic| |
+| Infrared | 11 - Right Wall Sensor <br/> 26 - Left Wall Sensor <br/> 27 - Barcode Sensor |
+| Ultrasonic| 16 - trigPin <br/> 17 - echoPin |
 
 ## System Diagrams
 ### Block Diagram
