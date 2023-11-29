@@ -1,2 +1,0 @@
-/opt/homebrew/bin/arm-none-eabi-ar qc libpid.a CMakeFiles/pid.dir/pid.c.obj
-/opt/homebrew/bin/arm-none-eabi-ranlib libpid.a
