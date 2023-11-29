@@ -1,13 +1,17 @@
 # INF2004-Embedded-Systems-Programming
 
 ## Table of contents
-* [General Info](#general-info)
-* [Hardware](#hardware)
-* [Pin Layout](#pin-layout)
-* [Software](#software)
-* [System Diagrams](#system-diagrams)
-* [Members](#members)
-* [Project Reflection](#project-reflection)
+- [INF2004-Embedded-Systems-Programming](#inf2004-embedded-systems-programming)
+  - [Table of contents](#table-of-contents)
+  - [General Info](#general-info)
+    - [Introduction](#introduction)
+  - [Hardware](#hardware)
+  - [Pin Layout](#pin-layout)
+  - [System Diagrams](#system-diagrams)
+    - [Block Diagram](#block-diagram)
+    - [Flow Diagram](#flow-diagram)
+  - [Members](#members)
+  - [Project Reflections](#project-reflections)
 
 ## General Info
 ### Introduction
@@ -86,3 +90,11 @@ driver
 </table>
 
 ## Project Reflections
+With the conclusion of our project, we had a car that was only partially integrated, without any mapping or navigation capabillites. This was disheartening but would however push us to improve and learn more about embedded systems.
+
+We faced many issues during the implementation with the car, we suspect that its mainly due to faulty hardware parts but are not able to confirm it. If we are able to redo this project, we would have started out with the implementation of RTOS first as this would greatly facilitate more complicated functionalities that we would have like to implement. In theory, we had a plan in place, with decent understanding and planning of how the mapping/navigation would go, however due to us being unable to calibrate our motors, we were stuck and left with a shortage of time, as we had to troubleshoot on many occasions. 
+
+Even though we implemented PID calibration for our motors, it was not sufficient to get the motors running at the same speed, we noticed that one motor may reach optimal speed before the other motor, which lead to visually detectable wiggle in the car's steering as it begins driving forward. 
+- Small differences in friction bewteen the 2 motors cause them to come up to speed differently even under the control of a closed feedback loop
+- To reduce this, we will consider implement a further 'C' term to our controller, aiming to minimize the difference bewteen the encoder counts of the 2 motors
+- 'C' 4th term in controller (Count difference in encoder count a/b) 
