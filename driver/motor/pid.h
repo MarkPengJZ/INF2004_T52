@@ -1,30 +1,36 @@
+// Header guard to prevent multiple inclusions
 #ifndef PID_H_
 #define PID_H_
 
-#define NO_SPEED 0
-#define LOW_SPEED 1
-#define MEDIUM_SPEED 2
-#define HIGH_SPEED 3
+// Define predefined speed constants
+#define SPEED_NONE 0
+#define SPEED_LOW 1
+#define SPEED_MEDIUM 2
+#define SPEED_HIGH 3
 
-#define uint unsigned int
+// Define alias for unsigned integer type
+typedef unsigned int uint;
 
-// Memory structure for PID controller
-typedef struct _PID {
-    float kP, kI, kD;
-    float setPoint;
-    float min, max;
-
-    float p, i, d;
-    float lastError;
+// Structure to represent PID controller parameters and state
+typedef struct _PID
+{
+    float kP, kI, kD; // Proportional, integral, and derivative gains
+    float setPoint;   // Desired value
+    float min, max;   // Output range
+    float p, i, d;    // Proportional, integral, and derivative error terms
+    float lastError;  // Previous error value
 } PID;
 
-// Instantiate a new PID controller
-PID* createPIDController(float kP, float kI, float kD, float setPoint, float min, float max);
-// Update the setpoint for the PID controller for a PID controller.
-void setPIDTargetValue(PID *pid, float setPoint);
-// Shorthand for setPIDTargetValue using the NO_SPEED, MEDIUM_SPEED, etc for predefined speeds.
-void setPIDTargetValueSpeed(PID *pid, int speed);
-// Execute the PID control algorithm
-uint executePIDControlLoop(PID* pid, float input, float deltaTime);
+// Function to create a new PID controller instance
+PID *PID_create(float kP, float kI, float kD, float setPoint, float min, float max);
+
+// Function to set the target value for the PID controller
+void PID_setTarget(PID *pid, float setPoint);
+
+// Convenience function to set the target value using predefined speed constants
+void PID_setTargetSpeed(PID *pid, int speed);
+
+// Function to perform PID control calculation
+uint PID_run(PID *pid, float input, float deltaTime);
 
 #endif

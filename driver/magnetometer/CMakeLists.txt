@@ -1,13 +1,13 @@
-# Initialize the Raspberry Pi Pico SDK
-pico_sdk_init()
+add_executable(magnetometer
+magnetometer.c
+        )
 
-# Add your source file to the magnetometer
-add_executable(magnetometer magnetometer.c)
+# pull in common dependencies
+target_link_libraries(magnetometer pico_stdlib hardware_i2c hardware_pwm)
 
-# Link the libraries you need (pico_stdlib and hardware_i2c)
-target_link_libraries(magnetometer pico_stdlib hardware_i2c)
-
-# Create a map/binary/hex file etc.
-pico_add_extra_outputs(magnetometer)
-
+# enable PUTTY console debugging :D
 pico_enable_stdio_usb(magnetometer 1)
+pico_enable_stdio_uart(magnetometer 0)
+
+# create map/bin/hex/uf2 file etc.
+pico_add_extra_outputs(magnetometer)
