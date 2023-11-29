@@ -98,3 +98,5 @@ Even though we implemented PID calibration for our motors, it was not sufficient
 - Small differences in friction bewteen the 2 motors cause them to come up to speed differently even under the control of a closed feedback loop
 - To reduce this, we will consider implement a further 'C' term to our controller, aiming to minimize the difference bewteen the encoder counts of the 2 motors
 - 'C' 4th term in controller (Count difference in encoder count a/b) 
+
+We also encountered issues with the magnetometer whereby the values we receieve would always fluctuate even though the sensor was stationary leading to inaccurate readings and hence inaccurate directon to turn. This resulted in the final decision of us forgoing magnetometer due to the unreliable sensor input.
